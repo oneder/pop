@@ -7,4 +7,9 @@ var PostSchema = new mongoose.Schema({
 	comments: [{type: mongoose.Schema.Types.ObjectId, ref: 'Comment'}]
 });
 
+PostSchema.methods.addToLikes = function(cb) {
+	this.likes += 1;
+	this.save(cb);
+};
+
 mongoose.model('Post', PostSchema);

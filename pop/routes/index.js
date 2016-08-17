@@ -4,6 +4,11 @@ var router = express.Router();
 var mongoose = require('mongoose');
 var Post = mongoose.model('Post');
 var Comment = mongoose.model('Comment');
+var User = mongoose.model('User');
+
+var passport = require('passport');
+var jwt = require('express-jwt');
+var auth = jwt({secret: 'SECRET', userProperty: 'payload'});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -40,8 +45,9 @@ router.param('comment', function(req, res, next, id) {
 });
 
 /* POST a new post */
-router.post('/posts', function(req, res, next) {
+router.post('/posts', auth, function(req, res, next) {
 	var post = new Post(req.body);
+	post.author = req.payload.username;
 
 	post.save(function(err, post) {
 		if(err)
@@ -51,9 +57,10 @@ router.post('/posts', function(req, res, next) {
 	});
 });
 /* POST a new comment */
-router.post('/posts/:post/comments', function(req, res, next) {
+router.post('/posts/:post/comments', auth, function(req, res, next) {
 	var comment = new Comment(req.body);
 	comment.post = req.post;
+	comment.author = req.payload.username;
 
 	comment.save(function(err, comment){
 		if(err)
@@ -93,7 +100,7 @@ router.get('/posts/:post', function(req, res) {
 });
 
 /* PUT 'like' functionality for posts */
-router.put('/posts/:post/like', function(req, res, next) {
+router.put('/posts/:post/like', auth, function(req, res, next) {
 	req.post.addToLikes(function(err, post) {
 		if(err)
 			return next(err);
@@ -102,13 +109,47 @@ router.put('/posts/:post/like', function(req, res, next) {
 	});
 });
 /* PUT 'like' functionality for comments */
-router.put('/posts/:post/comments/:comment/like', function(req, res, next) {
+router.put('/posts/:post/comments/:comment/like', auth, function(req, res, next) {
 	req.comment.addToLikes(function(err, comment) {
 		if(err)
 			return next(err);
 
 		res.json(comment);
-	})
-})
+	});
+});
+
+/* POST create a new user */
+router.post('/register', function(req, res, next) {
+	if(!req.body.username || !req.body.password)
+		return res.status(400).json({message: 'Please fill out all fields'});
+
+	var user = new User();
+
+	user.username = req.body.username;
+	user.setPassword(req.body.password);
+
+	user.save(function(err) {
+		if(err)
+			return next(err);
+
+		return res.json({token: user.generateJWT()});
+	});
+});
+
+/* POST authenticates user (returns token to client) */
+router.post('/login', function(req, res, next) {
+	if(!req.body.username || !req.body.password)
+		return res.status(400).json({message: 'Please fill out all fields'});
+
+	passport.authenticate('local', function(err, user, info) {
+		if(err)
+			return next(err);
+
+		if(user)
+			return res.json({token: user.generateJWT()});
+		else
+			return res.status(401).json(info);
+	})(req, res, next);
+});
 
 module.exports = router;

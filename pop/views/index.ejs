@@ -10,6 +10,16 @@
 	<script src="/javascripts/angularApp.js"></script>
 </head>
 <body ng-app="pop">
+	<nav class="navbar navbar-default pull-right" ng-controller="NavCtrl">
+		<ul class="nav navbar-nav">
+			<li ng-show="isLoggedIn()"><a>{{currentUser()}}</a></li>
+			<li ng-show="isLoggedIn()"><a href="" ng-click="logout()">Log Out</a></li>
+
+			<li ng-hide="isLoggedIn()"><a href="/#/login">Log In</a></li>
+			<li ng-hide="isLoggedIn()"><a href="/#/register">Register</a></li>
+		</ul>
+	</nav>
+	
 	<div class="row">
 		<div class="col-md-6 col-md-offset-3">
 			<ui-view></ui-view>
@@ -21,7 +31,10 @@
 			<h1>POP!</h1>
 		</div>
 
-		<form ng-submit="addPost()">
+		<div ng-hide="isLoggedIn()">
+			<h3>Please <a href="/#/login">Log In</a> or <a href="/#/register">Register</a> to create a post!</h3>
+		</div>
+		<form ng-submit="addPost()" ng-show="isLoggedIn()">
 			<h3>New Post</h3>
 			
 			<div class="form-group">
@@ -41,6 +54,7 @@
 				{{post.title}}
 			</a>
 			<span ng-hide="post.link">{{post.title}}</span>
+			<span ng-show="post.author">posted by <a>{{post.author}}</a></span>
 			<span><a href="#/posts/{{post._id}}">Comments</a></span>
 		</div>
 	</script>
@@ -52,7 +66,10 @@
 			</h3>
 		</div>
 
-		<form ng-submit="addComment()">
+		<div ng-hide="isLoggedIn()">
+			<h3>Please <a href="/#/login">Log In</a> or <a href="/#/register">Register</a> to leave a comment!</h3>
+		</div>
+		<form ng-submit="addComment()" ng-show="isLoggedIn()">
 			<h3>Add a new comment</h3>
 
 			<div class="form-group">
@@ -65,6 +82,48 @@
 			<span class="glyphicon glyphicon-thumbs-up" ng-click="addToLikes(comment)"></span>{{comment.likes}} - by {{comment.author}}
 			<span>{{comment.text}}</span>
 		</div>
+	</script>
+	<script type="text/ng-template" id="/register.html">
+		<div class="page-header">
+			<h1>Pop!</h1>
+		</div>
+
+		<div ng-show="error" class="alert alert-danger row">
+			<span>{{error.message}}</span>
+		</div>
+
+		<form ng-submit="register()">
+			<h3>Register</h3>
+
+			<div class="form-group">
+				<input type="text" class="form-control" placeholder="Username" ng-model="user.username">
+			</div>
+			<div class="form-group">
+				<input type="password" class="form-control" placeholder="Password" ng-model="user.password">
+			</div>
+			<button type="submit" class="btn btn-primary">Register</button>
+		</form>
+	</script>
+	<script type="text/ng-template" id="/login.html">
+		<div class="page-header">
+			<h1>Pop!</h1>
+		</div>
+
+		<div ng-show="error" class="alert alert-danger row">
+			<span>{{error.message}}</span>
+		</div>
+
+		<form ng-submit="login()">
+			<h3>Log In</h3>
+
+			<div class="form-group">
+				<input type="text" class="form-control" placeholder="username" ng-model="user.username">
+			</div>
+			<div class="form-group">
+				<input type="password" class="form-control" placeholder="Password" ng-model="user.password">
+			</div>
+			<button type="submit" class="btn btn-primary">Log In</button>
+		</form>
 	</script>
 </body>
 </html>
